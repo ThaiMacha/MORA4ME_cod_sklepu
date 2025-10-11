@@ -1,0 +1,131 @@
+# MORA4ME Production Deployment Script
+# Deploy to VPS/Cloud for mora4me.com
+
+name: Deploy to Production
+
+on:
+    push:
+        branches: [main, production]
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: "Deployment environment"
+                required: true
+                default: "production"
+                type: choice
+                options:
+                    - production
+                    - staging
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: thaimacha/mora4me-shop
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Log in to Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=ref,event=branch
+                      type=ref,event=pr
+                      type=sha,prefix={{branch}}-
+                      type=raw,value=latest,enable={{is_default_branch}}
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  file: ./docker/php/Dockerfile.prod
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Deploy to VPS
+              uses: appleboy/ssh-action@v1.0.0
+              with:
+                  host: ${{ secrets.VPS_HOST }}
+                  username: ${{ secrets.VPS_USER }}
+                  key: ${{ secrets.VPS_SSH_KEY }}
+                  port: ${{ secrets.VPS_PORT }}
+                  script: |
+                      # Navigate to deployment directory
+                      cd /home/mora4me/shop
+
+                      # Pull latest changes
+                      git pull origin main
+
+                      # Update environment variables
+                      echo "APP_SECRET=${{ secrets.APP_SECRET }}" > .env.prod
+                      echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.prod
+                      echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env.prod
+                      echo "MAILER_URL=${{ secrets.MAILER_URL }}" >> .env.prod
+                      echo "APP_URL=https://mora4me.com" >> .env.prod
+
+                      # Pull latest Docker images
+                      docker-compose -f docker-compose.prod.yml pull
+
+                      # Stop current containers
+                      docker-compose -f docker-compose.prod.yml down
+
+                      # Start updated containers
+                      docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+                      # Run database migrations
+                      docker-compose -f docker-compose.prod.yml exec -T php bin/console database:migrate --all
+
+                      # Clear cache
+                      docker-compose -f docker-compose.prod.yml exec -T php bin/console cache:clear --env=prod
+
+                      # Update search index
+                      docker-compose -f docker-compose.prod.yml exec -T php bin/console es:index
+
+                      # Cleanup old images
+                      docker image prune -f
+
+            - name: Verify deployment
+              uses: appleboy/ssh-action@v1.0.0
+              with:
+                  host: ${{ secrets.VPS_HOST }}
+                  username: ${{ secrets.VPS_USER }}
+                  key: ${{ secrets.VPS_SSH_KEY }}
+                  port: ${{ secrets.VPS_PORT }}
+                  script: |
+                      # Check if containers are running
+                      docker-compose -f /home/mora4me/shop/docker-compose.prod.yml ps
+
+                      # Check website health
+                      curl -f https://mora4me.com/health || exit 1
+
+            - name: Notify deployment status
+              if: always()
+              uses: 8398a7/action-slack@v3
+              with:
+                  status: ${{ job.status }}
+                  channel: "#deployments"
+                  webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  message: |
+                      Deployment to mora4me.com: ${{ job.status }}
+                      Branch: ${{ github.ref_name }}
+                      Commit: ${{ github.sha }}
+                      Time: ${{ steps.time.outputs.time }}

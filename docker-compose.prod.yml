@@ -1,0 +1,159 @@
+# Production Docker Compose for MORA4ME
+# VPS Deployment Configuration
+
+version: "3.8"
+
+services:
+  # Nginx Reverse Proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: mora4me_nginx_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/prod:/etc/nginx/conf.d
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+      - ./public:/var/www/html/public:ro
+      - ./media:/var/www/html/media:ro
+      - certbot_data:/var/www/certbot
+      - ssl_certs:/etc/letsencrypt
+    depends_on:
+      - php
+    networks:
+      - mora4me_prod_network
+    environment:
+      - DOMAIN=mora4me.com
+
+  # PHP-FPM Production
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    container_name: mora4me_php_prod
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/prod/php.ini:/usr/local/etc/php/php.ini
+      - ./docker/php/prod/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    environment:
+      - APP_ENV=prod
+      - APP_SECRET=${APP_SECRET}
+      - DATABASE_URL=mysql://shopware:${DB_PASSWORD}@mysql:3306/shopware
+      - MAILER_URL=${MAILER_URL}
+      - REDIS_URL=redis://redis:6379
+      - OPENSEARCH_URL=http://opensearch:9200
+      - APP_URL=https://mora4me.com
+      - SHOPWARE_ES_ENABLED=1
+      - SHOPWARE_ES_INDEXING_ENABLED=1
+      - SHOPWARE_CDN_STRATEGY_DEFAULT=physical_filename
+    depends_on:
+      - mysql
+      - redis
+      - opensearch
+    networks:
+      - mora4me_prod_network
+
+  # MySQL Production
+  mysql:
+    image: mysql:8.0
+    container_name: mora4me_mysql_prod
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: shopware
+      MYSQL_USER: shopware
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+      - ./docker/mysql/prod/my.cnf:/etc/mysql/conf.d/mysql.cnf
+      - ./backups/mysql:/backups
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - mora4me_prod_network
+
+  # Redis Production
+  redis:
+    image: redis:7-alpine
+    container_name: mora4me_redis_prod
+    restart: unless-stopped
+    volumes:
+      - redis_prod_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - mora4me_prod_network
+
+  # OpenSearch for Product Search
+  opensearch:
+    image: opensearchproject/opensearch:2
+    container_name: mora4me_opensearch_prod
+    restart: unless-stopped
+    environment:
+      - cluster.name=mora4me-cluster
+      - node.name=mora4me-node
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+      - DISABLE_SECURITY_PLUGIN=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch_prod_data:/usr/share/opensearch/data
+    networks:
+      - mora4me_prod_network
+
+  # Let's Encrypt SSL Certificate Management
+  certbot:
+    image: certbot/certbot
+    container_name: mora4me_certbot
+    volumes:
+      - ssl_certs:/etc/letsencrypt
+      - certbot_data:/var/www/certbot
+    command: >
+      sh -c "
+        certbot certonly --webroot 
+        --webroot-path=/var/www/certbot 
+        --email admin@mora4me.com 
+        --agree-tos 
+        --no-eff-email 
+        -d mora4me.com 
+        -d www.mora4me.com &&
+        while :; do sleep 12h & wait; certbot renew; done
+      "
+    depends_on:
+      - nginx
+
+  # Monitoring with Watchtower
+  watchtower:
+    image: containrrr/watchtower
+    container_name: mora4me_watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup --interval 3600
+    networks:
+      - mora4me_prod_network
+
+volumes:
+  mysql_prod_data:
+    driver: local
+  redis_prod_data:
+    driver: local
+  opensearch_prod_data:
+    driver: local
+  ssl_certs:
+    driver: local
+  certbot_data:
+    driver: local
+
+networks:
+  mora4me_prod_network:
+    driver: bridge
+    name: mora4me_prod_network
