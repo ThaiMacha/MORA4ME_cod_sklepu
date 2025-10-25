@@ -1,0 +1,52 @@
+{
+    "copilot.enable": true,
+    "copilot.chat.enabled": true,
+    "copilot.workspace.enabled": true,
+    "project": {
+        "name": "MORA4ME Shopware E-commerce",
+        "type": "shopware6",
+        "framework": "symfony",
+        "frontend": ["vue3", "twig", "scss"],
+        "backend": ["php8.2", "mysql", "redis"],
+        "tools": ["docker", "composer", "npm"]
+    },
+    "context": {
+        "patterns": [
+            "**/*.php",
+            "**/*.vue",
+            "**/*.twig", 
+            "**/*.js",
+            "**/*.ts",
+            "**/*.scss",
+            "**/*.yml",
+            "**/*.yaml",
+            "**/*.json",
+            "**/composer.json",
+            "**/package.json",
+            "docker-compose*.yml",
+            ".env*"
+        ],
+        "ignore": [
+            "**/vendor/**",
+            "**/node_modules/**",
+            "**/var/cache/**",
+            "**/public/bundles/**"
+        ]
+    },
+    "specializations": [
+        "shopware-plugin-development",
+        "symfony-best-practices", 
+        "vue3-composition-api",
+        "twig-templating",
+        "docker-devops",
+        "ecommerce-patterns"
+    ],
+    "prompts": {
+        "plugin": "Generate a Shopware 6 plugin with proper structure and best practices",
+        "component": "Create a Vue.js component for Shopware admin panel",
+        "template": "Build a Twig template for storefront with responsive design",
+        "migration": "Create database migration for Shopware entity",
+        "test": "Write comprehensive tests with PHPUnit and Jest",
+        "service": "Implement Symfony service with dependency injection"
+    }
+}

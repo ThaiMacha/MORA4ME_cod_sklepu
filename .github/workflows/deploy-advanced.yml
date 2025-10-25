@@ -1,0 +1,119 @@
+name: Deploy to VPS
+on:
+    push:
+        branches: [main, trunk]
+    workflow_dispatch:
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        environment: production
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.3"
+                  extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json
+
+            - name: Validate composer.json
+              run: composer validate --strict
+
+            - name: Install dependencies
+              run: composer install --no-dev --optimize-autoloader --no-interaction
+
+            - name: Run tests (if available)
+              run: |
+                  if [ -f "vendor/bin/phpunit" ]; then
+                    vendor/bin/phpunit
+                  else
+                    echo "No tests found, skipping..."
+                  fi
+
+            - name: Deploy to server
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.VPS_HOST }}
+                  port: ${{ secrets.VPS_PORT }}
+                  username: ${{ secrets.VPS_USERNAME }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  script: |
+                      echo "Starting deployment..."
+
+                      # Backup current version
+                      cd /var/www
+                      if [ -d "twoj-projekt-backup" ]; then
+                        rm -rf twoj-projekt-backup
+                      fi
+                      cp -r twoj-projekt twoj-projekt-backup
+
+                      # Update application
+                      cd /var/www/twoj-projekt
+                      git fetch origin
+                      git reset --hard origin/main
+
+                      # Install/update dependencies
+                      if [ -f "composer.json" ]; then
+                        composer install --no-dev --optimize-autoloader --no-interaction
+                      fi
+
+                      # Install Node.js dependencies if needed
+                      if [ -f "package.json" ]; then
+                        npm ci --production
+                        npm run build
+                      fi
+
+                      # Database migrations (if using Laravel/Symfony)
+                      if [ -f "artisan" ]; then
+                        php artisan migrate --force
+                        php artisan config:cache
+                        php artisan route:cache
+                        php artisan view:cache
+                      elif [ -f "bin/console" ]; then
+                        php bin/console doctrine:migrations:migrate --no-interaction
+                        php bin/console cache:clear --env=prod
+                        php bin/console cache:warmup --env=prod
+                      fi
+
+                      # Set proper permissions
+                      sudo chown -R www-data:www-data /var/www/twoj-projekt
+                      sudo chmod -R 755 /var/www/twoj-projekt
+
+                      # Set specific permissions for writable directories
+                      if [ -d "storage" ]; then
+                        sudo chmod -R 775 storage
+                      fi
+                      if [ -d "var" ]; then
+                        sudo chmod -R 775 var
+                      fi
+
+                      # Reload web server
+                      sudo systemctl reload apache2
+
+                      # Health check
+                      sleep 5
+                      response=$(curl -s -H "Host: twoja-domena.com" http://localhost:8080)
+                      if echo "$response" | grep -q "Witaj"; then
+                        echo "✅ Deployment successful!"
+                      else
+                        echo "❌ Health check failed, rolling back..."
+                        cd /var/www
+                        rm -rf twoj-projekt
+                        mv twoj-projekt-backup twoj-projekt
+                        sudo systemctl reload apache2
+                        exit 1
+                      fi
+
+                      echo "🚀 Deployment completed successfully!"
+
+            - name: Notify deployment status
+              if: always()
+              run: |
+                  if [ "${{ job.status }}" == "success" ]; then
+                    echo "✅ Deployment to production completed successfully!"
+                  else
+                    echo "❌ Deployment failed!"
+                  fi

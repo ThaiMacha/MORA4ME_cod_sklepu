@@ -18,11 +18,11 @@
     "comments": false,
     "strings": true
   },
-  // GitHub Copilot Configuration
+  // 🤖 GitHub Copilot Configuration
   "github.copilot.enable": {
     "*": true,
     "yaml": true,
-    "plaintext": false,
+    "plaintext": true,
     "markdown": true,
     "php": true,
     "javascript": true,
@@ -31,11 +31,21 @@
     "twig": true,
     "scss": true,
     "css": true,
-    "json": true
+    "json": true,
+    "html": true,
+    "dockerfile": true,
+    "dockercompose": true
   },
+  "github.copilot.editor.enableAutoCompletions": true,
+  "github.copilot.chat.enabled": true,
+  "github.copilot.workspace.enabled": true,
+  "github.copilot.chat.welcomeMessage": "Hello! I'm your specialized MORA4ME Shopware agent. I can help with:\n• 🔌 Plugin development\n• 🎨 Theme customization\n• 🧪 Testing & debugging\n• 📊 Performance optimization\n• 🛒 E-commerce features\n\nWhat would you like to work on today?",
+  "github.copilot.chat.useProjectSpecificModel": true,
   "github.copilot.advanced": {
     "listCount": 10,
-    "inlineSuggestCount": 3
+    "inlineSuggestCount": 5,
+    "debug.showScores": true,
+    "debug.overrideEngine": "codex"
   },
   // Files Configuration
   "files.associations": {
@@ -73,7 +83,7 @@
   "intelephense.diagnostics.enable": true,
   // Formatting
   "[php]": {
-    "editor.defaultFormatter": "junstyle.php-cs-fixer",
+    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client",
     "editor.formatOnSave": true
   },
   "[javascript]": {
@@ -98,7 +108,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[twig]": {
-    "editor.defaultFormatter": "mblode.twig-language-2"
+    "editor.defaultFormatter": "vscode.html-language-features"
   },
   // PHP CS Fixer
   "php-cs-fixer.executablePath": "${workspaceFolder}/vendor/bin/php-cs-fixer",
@@ -140,6 +150,22 @@
   // Terminal Configuration
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.persistentSessionReviveProcess": "onExitAndWindowClose",
+  "terminal.integrated.enablePersistentSessions": true,
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    },
+    "Git Bash": {
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+      "icon": "terminal-bash"
+    },
+    "Command Prompt": {
+      "path": "C:\\Windows\\System32\\cmd.exe",
+      "icon": "terminal-cmd"
+    }
+  },
   // Remote Configuration
   "remote.autoForwardPortsSource": "process",
   // Search Configuration
@@ -166,7 +192,11 @@
     "vue-html": "html"
   },
   // Auto Save
-  "files.autoSave": "onFocusChange",
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
   // TypeScript Configuration
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.suggest.autoImports": true,
@@ -181,5 +211,41 @@
   // Workbench
   "workbench.editor.enablePreview": false,
   "workbench.startupEditor": "readme",
-  "workbench.tree.indent": 20
+  "workbench.tree.indent": 20,
+  // 🔄 Session Persistence & State Management
+  "window.restoreWindows": "all",
+  "window.restoreFullscreen": true,
+  "workbench.editor.restoreViewState": true,
+  "workbench.settings.enableNaturalLanguageSearch": true,
+  "workbench.enableExperiments": false,
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "explorer.autoReveal": true,
+  // 🚀 Performance & Productivity Optimizations
+  "editor.inlineSuggest.enabled": true,
+  "editor.inlineSuggest.showToolbar": "always",
+  "editor.semanticHighlighting.enabled": true,
+  "editor.inlayHints.enabled": "on",
+  // 🔧 Code Actions & Quick Fixes
+  "editor.codeActionsOnSave": {
+    "source.addMissingImports": "explicit",
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit",
+    "source.sortImports": "explicit"
+  },
+  // ⚡ Memory & Performance
+  "search.followSymlinks": false,
+  "typescript.tsc.autoDetect": "off",
+  // 🛡️ Security & Trust
+  "security.workspace.trust.enabled": true,
+  "security.workspace.trust.startupPrompt": "once",
+  "security.workspace.trust.banner": "always",
+  // 📊 Telemetry for Copilot analytics
+  "telemetry.telemetryLevel": "all",
+  // 🎯 Task & Debug Configuration
+  "task.autoDetect": "on",
+  "task.quickOpen.history": 10,
+  "task.slowProviderWarning": false,
+  "debug.saveBeforeStart": "allEditorsInActiveGroup",
+  "debug.showBreakpointsInOverviewRuler": true,
+  "debug.showInlineBreakpointCandidates": true
 }

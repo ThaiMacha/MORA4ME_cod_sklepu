@@ -1,0 +1,24 @@
+name: Deploy to VPS
+on:
+    push:
+        branches: [main]
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Deploy to server
+              uses: appleboy/ssh-action@v0.1.2
+              with:
+                  host: 57.128.225.66
+                  port: 2233
+                  username: ubuntu
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  script: |
+                      cd /var/www/twoj-projekt
+                      git pull origin main
+                      composer install --no-dev
+                      sudo chown -R www-data:www-data .
+                      sudo systemctl reload apache2

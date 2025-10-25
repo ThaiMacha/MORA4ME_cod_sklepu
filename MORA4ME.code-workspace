@@ -1,0 +1,181 @@
+{
+    "folders": [
+        {
+            "name": "MORA4ME Shopware",
+            "path": "."
+        }
+    ],
+    "settings": {
+        // Inherit from .vscode/settings.json
+        "workbench.startupEditor": "welcomePageInEmptyWorkbench",
+        "window.restoreWindows": "all",
+        "window.restoreFullscreen": true,
+        "workbench.editor.restoreViewState": true,
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 1000,
+        "files.hotExit": "onExitAndWindowClose",
+        "files.restoreUndoStack": true,
+
+        // 🤖 GitHub Copilot Enhanced Configuration
+        "github.copilot.enable": {
+            "*": true,
+            "php": true,
+            "javascript": true,
+            "typescript": true,
+            "vue": true,
+            "twig": true,
+            "scss": true,
+            "yaml": true,
+            "markdown": true,
+            "json": true,
+            "dockerfile": true
+        },
+        "github.copilot.editor.enableAutoCompletions": true,
+        "github.copilot.chat.enabled": true,
+        "github.copilot.workspace.enabled": true,
+        "github.copilot.chat.welcomeMessage": "🚀 MORA4ME Shopware Development Assistant Ready!\n\n🔧 Available commands:\n• @workspace - Ask about project structure\n• /explain - Explain code functionality\n• /fix - Fix code issues\n• /tests - Generate tests\n• /docs - Generate documentation\n\n🎯 Specializations:\n• Shopware 6 plugin development\n• PHP 8.2+ & Symfony best practices\n• Vue.js 3 & TypeScript\n• Twig templating\n• Docker & DevOps\n\nHow can I help you today?",
+        "github.copilot.advanced": {
+            "listCount": 10,
+            "inlineSuggestCount": 5
+        },
+
+        // Terminal Configuration
+        "terminal.integrated.defaultProfile.windows": "PowerShell",
+        "terminal.integrated.cwd": "${workspaceFolder}",
+        "terminal.integrated.profiles.windows": {
+            "PowerShell": {
+                "source": "PowerShell",
+                "icon": "terminal-powershell"
+            },
+            "Git Bash": {
+                "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+                "icon": "terminal-bash"
+            }
+        },
+
+        // Git Configuration
+        "git.autofetch": true,
+        "git.confirmSync": false,
+        "git.enableSmartCommit": true,
+        "git.suggestSmartCommit": true,
+
+        // Development Workflow
+        "task.autoDetect": "on",
+        "debug.saveBeforeStart": "allEditorsInActiveGroup",
+
+        // File Associations for Shopware
+        "files.associations": {
+            "*.twig": "twig",
+            "*.theme": "json",
+            "*.vue": "vue",
+            ".env*": "dotenv",
+            "compose.yaml": "dockercompose",
+            "docker-compose*.yml": "dockercompose"
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            // 🤖 GitHub Copilot Suite
+            "github.copilot",
+            "github.copilot-chat",
+
+            // 🔧 PHP Development
+            "bmewburn.vscode-intelephense-client",
+            "xdebug.php-debug",
+            "junstyle.php-cs-fixer",
+            "phpstan.phpstan",
+
+            // 🎨 Frontend Development
+            "vue.volar",
+            "vue.vscode-typescript-vue-plugin",
+            "ms-vscode.vscode-typescript-next",
+
+            // 🐳 Docker & DevOps
+            "ms-azuretools.vscode-docker",
+            "ms-vscode-remote.remote-containers",
+
+            // 📊 Code Quality
+            "esbenp.prettier-vscode",
+            "dbaeumer.vscode-eslint",
+            "mblode.twig-language-2",
+
+            // 🔗 Git & GitHub
+            "eamodio.gitlens",
+            "github.vscode-pull-request-github",
+
+            // 🛠️ Utility
+            "christian-kohler.path-intellisense",
+            "formulahendry.auto-rename-tag",
+            "redhat.vscode-yaml"
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "🚀 Start Development Environment",
+                "type": "shell",
+                "command": "docker-compose up -d",
+                "group": "build",
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "new"
+                },
+                "problemMatcher": [],
+                "dependsOrder": "sequence"
+            },
+            {
+                "label": "🛑 Stop Development Environment",
+                "type": "shell",
+                "command": "docker-compose down",
+                "group": "build",
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": false,
+                    "panel": "shared"
+                }
+            },
+            {
+                "label": "🔄 Restart Services",
+                "type": "shell",
+                "command": "docker-compose restart",
+                "group": "build",
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": false,
+                    "panel": "shared"
+                }
+            },
+            {
+                "label": "🤖 Ask Copilot about Project",
+                "type": "shell",
+                "command": "echo",
+                "args": ["💡 Tip: Use @workspace in Copilot Chat to ask about this Shopware project structure and best practices!"],
+                "group": "build",
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "new"
+                }
+            },
+            {
+                "label": "📊 Project Health Check",
+                "type": "shell",
+                "command": "docker-compose",
+                "args": ["ps", "--all"],
+                "group": "test",
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "shared"
+                }
+            }
+        ]
+    }
+}
